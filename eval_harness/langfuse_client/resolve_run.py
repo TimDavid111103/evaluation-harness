@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 from langfuse import Langfuse
 
-from eval_sync.models import RunRef
+from eval_harness.models import RunRef
 
 
 def _paginate_datasets(client: Langfuse) -> list:

@@ -1,4 +1,4 @@
 {
   "$schema": "https://gofastmcp.com/schemas/fastmcp.json",
-  "entrypoint": "eval_sync/mcp_server.py:mcp"
+  "entrypoint": "eval_harness/mcp_server.py:mcp"
 }

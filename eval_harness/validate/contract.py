@@ -1,8 +1,10 @@
 from typing import Any, Literal
 
-from eval_sync.models import ContractError
+from eval_harness.models import ContractError
 
 JUDGE_SCORE_NAME = "judge_verdict"
+PASS_STRINGS = frozenset({"pass", "true", "yes", "1"})
+FAIL_STRINGS = frozenset({"fail", "false", "no", "0"})
 
 
 def _score_name(score: Any) -> str | None:
@@ -44,9 +46,9 @@ def normalize_outcome(value: Any) -> Literal["pass", "fail"]:
         raise ContractError(f"judge_verdict numeric value {value!r} is not 0/1")
     if isinstance(value, str):
         normalized = value.strip().lower()
-        if normalized in ("pass", "true", "yes", "1"):
+        if normalized in PASS_STRINGS:
             return "pass"
-        if normalized in ("fail", "false", "no", "0"):
+        if normalized in FAIL_STRINGS:
             return "fail"
         raise ContractError(f"judge_verdict string value {value!r} is not pass/fail")
     raise ContractError(f"judge_verdict value type {type(value).__name__} is unsupported")

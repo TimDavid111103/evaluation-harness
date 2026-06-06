@@ -1,7 +1,7 @@
 import pytest
 
-from eval_sync.models import ContractError
-from eval_sync.validate.contract import extract_judge_verdict, normalize_outcome
+from eval_harness.models import ContractError
+from eval_harness.validate.contract import extract_judge_verdict, normalize_outcome
 
 
 class Score:

@@ -3,8 +3,8 @@ from datetime import datetime
 
 from notion_client import Client
 
-from eval_sync.format.json_values import split_rich_text
-from eval_sync.models import EvalRow, RunRef
+from eval_harness.format.json_values import split_rich_text
+from eval_harness.models import EvalRow, RunRef
 
 AGREEMENT_FORMULA = (
     'if(empty(prop("Human Outcome")), "", '
@@ -32,7 +32,7 @@ def write_notion(
     parent_page_id: str,
 ) -> tuple[str, str]:
     date_str = datetime.now().strftime("%Y-%m-%d")
-    page_title = f"Eval sync — {run.dataset_name}/{run.run_name} — {date_str}"
+    page_title = f"Eval harness — {run.dataset_name}/{run.run_name} — {date_str}"
 
     database = client.databases.create(
         parent={"type": "page_id", "page_id": parent_page_id},

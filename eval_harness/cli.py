@@ -3,8 +3,8 @@ from typing import Literal, Optional
 
 import typer
 
-from eval_sync.models import ContractError
-from eval_sync.sync import run_sync
+from eval_harness.models import ContractError
+from eval_harness.sync import run_sync
 
 app = typer.Typer(no_args_is_help=True, help="Sync Langfuse eval runs to Notion or Excel.")
 

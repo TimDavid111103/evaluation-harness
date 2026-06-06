@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from eval_sync.format.json_values import (
+from eval_harness.format.json_values import (
     coerce_value,
     format_input,
     format_output,

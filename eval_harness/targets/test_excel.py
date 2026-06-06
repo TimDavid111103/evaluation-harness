@@ -3,8 +3,8 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-from eval_sync.models import EvalRow, RunRef
-from eval_sync.targets.excel import write_excel
+from eval_harness.models import EvalRow, RunRef
+from eval_harness.targets.excel import write_excel
 
 
 def test_write_excel_creates_grade_ready_sheet(tmp_path: Path):
