@@ -1,12 +1,12 @@
 from typing import Literal
 
-from eval_sync.config import get_notion_config, get_output_dir
-from eval_sync.langfuse.client import create_langfuse_client
-from eval_sync.langfuse.fetch_cases import fetch_cases
-from eval_sync.langfuse.resolve_run import resolve_run
-from eval_sync.models import SyncResult
-from eval_sync.targets.excel import write_excel
-from eval_sync.targets.notion import write_notion
+from eval_harness.config import get_notion_config, get_output_dir
+from eval_harness.langfuse_client.client import create_langfuse_client
+from eval_harness.langfuse_client.fetch_cases import fetch_cases
+from eval_harness.langfuse_client.resolve_run import resolve_run
+from eval_harness.models import SyncResult
+from eval_harness.targets.excel import write_excel
+from eval_harness.targets.notion import write_notion
 
 try:
     from notion_client import Client as NotionClient

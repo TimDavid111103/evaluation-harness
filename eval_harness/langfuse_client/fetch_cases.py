@@ -2,9 +2,9 @@ from urllib.parse import quote
 
 from langfuse import Langfuse
 
-from eval_sync.format.json_values import format_input, format_output
-from eval_sync.models import ContractError, EvalRow
-from eval_sync.validate.contract import extract_judge_verdict
+from eval_harness.format.json_values import format_input, format_output
+from eval_harness.models import ContractError, EvalRow
+from eval_harness.validate.contract import extract_judge_verdict
 
 
 def fetch_cases(client: Langfuse, dataset_name: str, run_name: str) -> list[EvalRow]:

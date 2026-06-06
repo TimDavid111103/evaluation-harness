@@ -29,6 +29,6 @@ def get_notion_config() -> dict[str, str]:
 
 
 def get_output_dir() -> Path:
-    path = Path(os.getenv("EVAL_SYNC_OUTPUT_DIR", "./output"))
+    path = Path(os.getenv("EVAL_HARNESS_OUTPUT_DIR", "./output"))
     path.mkdir(parents=True, exist_ok=True)
     return path

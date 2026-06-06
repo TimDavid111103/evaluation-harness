@@ -1,6 +1,6 @@
 from langfuse import Langfuse
 
-from eval_sync.config import get_langfuse_config
+from eval_harness.config import get_langfuse_config
 
 
 def create_langfuse_client() -> Langfuse:

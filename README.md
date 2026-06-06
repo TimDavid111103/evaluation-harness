@@ -1,127 +1,101 @@
-# Eval Sync Harness
+# Eval Harness
 
-MCP-triggered sync service that pulls LLM-judge eval results from Langfuse into a Notion table or Excel sheet for human grading. Moves and structures data only — runs no evals, never touches project code.
+MCP server for coding agents (Cursor, Claude Code). Pulls Langfuse eval runs into Notion or Excel for human grading. Does not run evals or modify project code.
 
-## Setup
+## Agent workflow
 
-```bash
-uv sync --extra dev
-cp .env.example .env
-# Fill in Langfuse and (optionally) Notion credentials
-```
+1. **Read `eval-harness-guide`** — before implementing Langfuse eval instrumentation or pulling results.
+2. Implement evals in the project (multi-stage pipelines OK).
+3. `**pull_eval_run_for_grading**` — after a dataset run completes.
 
-### Environment variables
+Eval projects only need the Langfuse SDK. They do not install this repo.
 
-| Variable | Required | Description |
-| -------- | -------- | ----------- |
-| `LANGFUSE_PUBLIC_KEY` | Yes | Langfuse API public key |
-| `LANGFUSE_SECRET_KEY` | Yes | Langfuse API secret key |
-| `LANGFUSE_HOST` | No | Default `https://cloud.langfuse.com` |
-| `NOTION_API_KEY` | For Notion target | Notion integration token |
-| `NOTION_PARENT_PAGE_ID` | For Notion target | Page ID where sync tables are created |
-| `EVAL_SYNC_OUTPUT_DIR` | No | Excel output directory (default `./output`) |
+## MCP setup
 
-## Per-project contract
-
-Every evaluated project must:
-
-1. Trace eval runs to Langfuse as a **dataset run**
-2. Emit `judge_verdict` as a shared ScoreConfig (boolean or pass/fail categorical)
-3. Put judge rationale in the score **comment**
-4. Attach the score at **trace level**, one trace per eval case
-
-Example (Python SDK):
-
-```python
-root_span.score_trace(
-    name="judge_verdict",
-    value=True,  # or "pass" / "fail"
-    comment="The response correctly identifies the issue.",
-)
-```
-
-If a project does not follow this contract, sync returns a structured error listing failing trace IDs.
-
-## Usage
-
-### CLI
+One-time harness setup:
 
 ```bash
-# Latest dataset run project-wide → Excel
-uv run eval-sync sync --target excel
-
-# Explicit run → Notion
-uv run eval-sync sync --target notion --dataset my-dataset --run-name my-run-2026-06-05
+git clone <this-repo> ~/evaluation-harness   # or your path
+cd ~/evaluation-harness
+uv sync
+cp .env.example .env                         # fill in credentials
 ```
 
-### MCP (Cursor)
+Register the server globally in Cursor or Claude Code. Replace the path with your clone location.
 
-Register in Cursor MCP settings:
+**Cursor** — Settings → MCP → add server:
 
 ```json
 {
   "mcpServers": {
-    "eval-sync": {
+    "eval-harness": {
       "command": "uv",
-      "args": ["run", "fastmcp", "run", "eval_sync/mcp_server.py:mcp"],
-      "cwd": "/path/to/evaluation-harness",
-      "env": {
-        "LANGFUSE_PUBLIC_KEY": "pk-lf-...",
-        "LANGFUSE_SECRET_KEY": "sk-lf-...",
-        "LANGFUSE_HOST": "https://cloud.langfuse.com"
-      }
+      "args": [
+        "run",
+        "--directory",
+        "/Users/you/evaluation-harness",
+        "eval-harness-mcp"
+      ]
     }
   }
 }
 ```
 
-Or from the repo root with `fastmcp.json`:
+**Claude Code** — add the same block to your MCP config (`~/.claude.json` or project MCP settings, depending on your setup).
 
-```bash
-uv run fastmcp run eval_sync/mcp_server.py:mcp
-```
+Credentials load from the harness `.env` (recommended). You can also pass `env` in the MCP block if you prefer.
 
-**Tool:** `sync(target, run="latest", dataset_name=None, run_name=None)`
+### Environment variables
 
-## Output schema
 
-Each sync creates a **fresh** table with 7 columns:
+| Variable                  | Required                        | Description                                 |
+| ------------------------- | ------------------------------- | ------------------------------------------- |
+| `LANGFUSE_PUBLIC_KEY`     | For `pull_eval_run_for_grading` | Langfuse API public key                     |
+| `LANGFUSE_SECRET_KEY`     | For `pull_eval_run_for_grading` | Langfuse API secret key                     |
+| `LANGFUSE_HOST`           | No                              | Default `https://cloud.langfuse.com`        |
+| `NOTION_API_KEY`          | For Notion target               | Notion integration token                    |
+| `NOTION_PARENT_PAGE_ID`   | For Notion target               | Page ID where grading tables are created    |
+| `EVAL_HARNESS_OUTPUT_DIR` | No                              | Excel output directory (default `./output`) |
 
-| Column | Populated by sync |
-| ------ | ----------------- |
-| Input | Yes |
-| Model response | Yes |
-| Model critique | Yes |
-| Model outcome | Yes |
-| Human Critique | No |
-| Human Outcome | No |
-| Agreement | Formula (`Model outcome == Human Outcome`) |
 
-**Match %:** average of Agreement. Excel writes this in cell B1. In Notion, enable **Calculate → Average** on the Agreement column.
+Eval traces must land in the **same Langfuse project** these keys can access.
 
-### JSON handling
+**Notion one-time setup:** create an integration → copy token to `NOTION_API_KEY` → share the parent page with the integration → copy page ID to `NOTION_PARENT_PAGE_ID`.
 
-Langfuse trace input/output may be chat arrays, nested eval objects, or plain text. The sync:
+### Agent rule (recommended)
 
-- Renders chat inputs as `[role]\ncontent` transcripts
-- Pretty-prints other JSON structures
-- Truncates at 32k characters; chunks Notion rich text at 2k
+Add to your Cursor/Claude Code rules:
 
-## Workflow
+> Before implementing Langfuse eval instrumentation, read the eval-harness MCP resource `eval-harness-guide`. After evals complete, call `pull_eval_run_for_grading` with explicit `dataset_name` and `run_name`.
 
-1. Run evals in your project; judge scores each case in Langfuse
-2. Call `sync` (CLI or MCP)
-3. Fill Human Outcome and Human Critique in the sheet
-4. Read match % and review mismatched rows
-5. Change your project, re-run evals, sync again to a new table
-6. Compare match % between runs
+## MCP surface
 
-## Tests
 
-```bash
-uv run pytest
-```
+| Kind     | Name                        | Purpose                                                  |
+| -------- | --------------------------- | -------------------------------------------------------- |
+| Resource | `eval-harness-guide`        | Langfuse setup + how to call `pull_eval_run_for_grading` |
+| Tool     | `pull_eval_run_for_grading` | Pull a dataset run into Notion or Excel                  |
 
-## Out of scope
 
-Eval execution, project adapters, critique alignment, kappa/confusion matrices, stable case IDs, upsert/idempotency, cross-run diffs.
+Prefer explicit `dataset_name` + `run_name`. `run="latest"` selects the newest dataset run **project-wide** across all datasets.
+
+## Grading sheet output
+
+Each pull creates a **fresh** table.
+
+
+| Column         | Source                  | Populated by eval-harness |
+| -------------- | ----------------------- | ------------------------- |
+| Input          | `trace.input`           | Yes                       |
+| Model response | `trace.output`          | Yes                       |
+| Model critique | `judge_verdict` comment | Yes                       |
+| Model outcome  | `judge_verdict` value   | Yes                       |
+| Human Critique | —                       | No                        |
+| Human Outcome  | —                       | No                        |
+| Agreement      | formula                 | Formula                   |
+
+
+Notion also adds a **Case** column (trace ID). Match %: Excel writes `AVERAGE(Agreement)` in B1; in Notion, enable **Calculate → Average** on Agreement.
+
+Chat inputs render as `[role]\ncontent` transcripts; other JSON is pretty-printed. Text truncates at 32k chars (Notion rich text chunks at 2k).
+

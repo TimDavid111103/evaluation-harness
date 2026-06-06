@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment
 from openpyxl.worksheet.datavalidation import DataValidation
 
-from eval_sync.models import EvalRow, RunRef
+from eval_harness.models import EvalRow, RunRef
 
 HEADERS = [
     "Input",
@@ -25,14 +25,14 @@ def _safe_filename(value: str) -> str:
 def write_excel(rows: list[EvalRow], run: RunRef, output_dir: Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     filename = (
-        f"eval-sync-{_safe_filename(run.dataset_name)}-"
+        f"eval-harness-{_safe_filename(run.dataset_name)}-"
         f"{_safe_filename(run.run_name)}-{timestamp}.xlsx"
     )
     path = output_dir / filename
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "Eval sync"
+    ws.title = "Eval harness"
 
     ws["A1"] = "Match %"
     ws["B1"] = '=IFERROR(AVERAGE(G3:G),"")'
